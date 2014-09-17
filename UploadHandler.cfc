@@ -1,11 +1,18 @@
-component 
-{
-	if (ListFirst(server.coldfusion.productVersion) < 11)
-		include "cf11.cfm";
+component {
+	if ( (server.coldfusion.productName eq 'ColdFusion'	&& ListFirst(server.coldfusion.productVersion) < 11 ) ||
+		 (server.coldfusion.productName eq 'Railo'		&& ListFirst(server.coldfusion.productVersion) < 10 ) ) {
+		include "_cf_header.cfm";
+		include "_arrayMap.cfm";
+	}
 
 	include "_fileUploadAll.cfm";			// CF10 bugfix
-	include "php.cfm";    
-	
+
+	if (server.coldfusion.productName neq 'Railo' ) {
+		include "_empty.cfm";
+	}
+	include "_preg_replace_callback.cfm";
+	include "_getImageSize.cfm";
+
 	options = {};
 
     error_messages = {
@@ -144,6 +151,7 @@ component
 		if (processRequest){
 			processRequest();
 		}
+		return this;
     }
 
     function processRequest() {
@@ -167,15 +175,15 @@ component
                 getpagecontext().getresponse().setStatus(405, 'Method Not Allowed');
         }
     }
-    
+
     private function get_full_url() {
         var https = !empty(CGI['HTTPS']) && compare(CGI['HTTPS'], 'on') == 0;
         return
-            (https ? 'https://' : 'http://') & 
-            (!empty(CGI['REMOTE_USER']) ? CGI['REMOTE_USER'] & '@' : '') & 
-            (!isNull(CGI['HTTP_HOST']) ? CGI['HTTP_HOST'] : (CGI['SERVER_NAME'] & 
+            (https ? 'https://' : 'http://') &
+            (!empty(CGI['REMOTE_USER']) ? CGI['REMOTE_USER'] & '@' : '') &
+            (!isNull(CGI['HTTP_HOST']) ? CGI['HTTP_HOST'] : (CGI['SERVER_NAME'] &
             (https && CGI['SERVER_PORT'] == 443 ||
-            CGI['SERVER_PORT'] == 80 ? '' : ':' & CGI['SERVER_PORT']))) & 
+            CGI['SERVER_PORT'] == 80 ? '' : ':' & CGI['SERVER_PORT']))) &
             GetDirectoryFromPath(CGI['SCRIPT_NAME']);
     }
 
@@ -184,7 +192,7 @@ component
     }
 
     private function get_user_path() {
-        if (structKeyExists(options, 'user_dirs') && len(options['user_dirs'])) {
+        if (structKeyExists(options, 'user_dirs') && options['user_dirs']) {
             return get_user_id() & '/';
         }
         return '';
@@ -194,7 +202,7 @@ component
         if (empty(version)) {
             var version_path = '';
         } else {
-            var version_dir = isDefined("variables.options.image_versions.#version#.upload_dir") ?  
+            var version_dir = isDefined("variables.options.image_versions.#version#.upload_dir") ?
             	options['image_versions'][version]['upload_dir'] : "";
             if (len(version_dir)) {
                 return version_dir & get_user_path() & file_name;
@@ -205,8 +213,8 @@ component
              & version_path & file_name;
     }
 
-    private function get_query_separator(url) {
-        return find('?', url) == 0 ? '?' : '&';
+    private function get_query_separator(urlString) {
+        return find('?', urlString) == 0 ? '?' : '&';
     }
 
     private function get_download_url(file_name, version="", direct = false) {
@@ -223,7 +231,7 @@ component
         if (empty(version)) {
             var version_path = '';
         } else {
-            var version_url = isDefined("options.image_versions.#version#.upload_url") ? 
+            var version_url = isDefined("options.image_versions.#version#.upload_url") ?
             	options['image_versions'][version]['upload_url'] : "";
             if (len(version_url)) {
                 return version_url & get_user_path() & urlEncodedFormat(file_name);
@@ -307,8 +315,7 @@ component
     }
 
     private function get_error_message(error) {
-        return array_key_exists(error, error_messages) ?
-            error_messages[error] : error;
+        return structKeyExists(error_messages, error) ? error_messages[error] : error;
     }
 
 
@@ -357,7 +364,8 @@ component
         var img_width = "";
         var img_height = "";
 
-        if (len(max_width) || len(max_height) || len(min_width) || len(min_height)) {
+        if ( (len(max_width) || len(max_height) || len(min_width) || len(min_height)) &&
+        		reFindNoCase(options['image_file_types'] ,file.name) ) {
            	var size = get_image_size(uploaded_file);
            	img_width = size[1];
            	img_height = size[2];
@@ -425,7 +433,7 @@ component
         if (!len(name)) {
             name = getTickCount();
         }
-        
+
         switch(fileGetMimeType(file_path)){
             case "image/jpeg":
                 extensions = ['jpg', 'jpeg'];
@@ -503,7 +511,7 @@ component
 
 	private function cfimage_imageFlip(image, mode) {
 		switch(mode) {
-			case 1: 
+			case 1:
 				imageFlip(image, "horizontal");
 				return image;
 				break;
@@ -511,7 +519,7 @@ component
 				imageFlip(image, "vertical");
 				return image;
 				break;
-			case 3: 
+			case 3:
 				imageFlip(image, "diagonal");
 				return image;
 				break;
@@ -523,7 +531,7 @@ component
 	private function cfimage_orient_image(file_path, src_img) {
         var image = imageRead(file_path);
 		var orientation = ImageGetEXIFTag(image, 'orientation');
-		
+
 		if (!isNull(orientation) && findNoCase('rotate', orientation)) {
 			var rotateValue = reReplace(orientation,'[^0-9]','','all');
 
@@ -534,7 +542,7 @@ component
 			imageWrite(theImage, filePath, 1, true);
 		}
 
-		cfimage_set_image_object(filePath, theImage);		
+		cfimage_set_image_object(filePath, theImage);
 		return true;
     }
 
@@ -542,9 +550,9 @@ component
 		var paths = get_scaled_image_file_paths(fileName, version);
 		var file_path = paths[1];
 		var new_file_path = paths[2];
-		
+
 		var type = listLast(fileName, '.');
-			
+
 		var src_img = cfimage_get_image_object(
 			file_path,
 			"",
@@ -603,9 +611,9 @@ component
 			var dst_y = 0 - (new_height - max_height) / 2;
 	        imageScaleToFit(new_img, new_width, new_height);
 		}
-        
+
         var success = true;
-        
+
 		try {
 			imageWrite(new_img, new_file_path);
 		} catch (exception e) {
@@ -677,7 +685,7 @@ component
         }
         return getimagesize(file_path);
     }
-    
+
 
     private function create_scaled_image(file_name, version, options) {
         if (structKeyExists(options, 'image_library') && options['image_library'] == 2) {
@@ -789,15 +797,17 @@ component
     private function body(str) {
         writeOutput(str);
     }
-    
+
     private function header(str) {
         var name = listFirst(str, ':');
         var value = trim(listRest(str, ':'));
-        
-        if (name == "location")
+
+        if (name == "location") {
         	location(value);
-        else
-	        cf_header(name=name, value=value);
+         } else {
+	        //cf_header(name=name, value=value);
+	        getpagecontext().getresponse().setHeader(name,value);
+	    }
     }
 
     private function get_server_var(id) {
@@ -842,7 +852,7 @@ component
     }
 
     private function get_file_names_params() {
-        var params = !isNull(URL[options['param_name']]) ? 
+        var params = !isNull(URL[options['param_name']]) ?
         	URL[options['param_name']] : {};
         structEach(params, function(key, value) {
             params[key] = getFileFromPath(value);
@@ -955,21 +965,21 @@ component
         if (!isNull(URL._method) && URL['_method'] == 'DELETE') {
             return delete(print_response);
         }
-        
+
         // TODO: factor out tmp folder
         var upload = _fileUploadAll( getTempDirectory() ,"","makeUnique");
-        
+
         // Parse the Content-Range header, which has the following form:
         // Content-Range: bytes 0-524287/2000000
-       	var content_range = len(get_server_var('HTTP_CONTENT_RANGE')) ? 
-       		reMatch('[0-9]+', get_server_var('HTTP_CONTENT_RANGE')) : ""; 
-        
+       	var content_range = len(get_server_var('HTTP_CONTENT_RANGE')) ?
+       		reMatch('[0-9]+', get_server_var('HTTP_CONTENT_RANGE')) : "";
+
         var size = isArray(content_range) ? content_range[3] : "";
         var files = [];
-        
+
         for (var index=1; index <= arrayLen(upload); index++) {
         	var curUpload = upload[index];
-            arrayAppend(files, 
+            arrayAppend(files,
             	handle_file_upload(
             		curUpload.serverDirectory & '/' & curUpload.serverFile,
             		curUpload.serverFile,
@@ -1010,5 +1020,5 @@ component
             response[file_name] = success;
         }
         return generate_response(response, print_response);
-    }	
+    }
 }
