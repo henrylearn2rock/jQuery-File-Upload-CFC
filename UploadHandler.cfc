@@ -370,7 +370,7 @@ component {
            	img_width = size[1];
            	img_height = size[2];
         }
-        if (!empty(img_width)) {
+        if (!isNull(local.img_width) && !empty(local.img_width)) {
             if (len(max_width) && img_width > max_width) {
                 file.error = get_error_message('max_width');
                 return false;
