@@ -764,7 +764,7 @@ component {
                 }
             } else {
                 file.size = file_size;
-                if (!(content_range) && options['discard_aborted_uploads']) {
+                if (isArray(content_range) && !arrayLen(content_range) && options['discard_aborted_uploads']) {
                     fileDelete(file_path);
                     file.error = get_error_message('abort');
                 }
