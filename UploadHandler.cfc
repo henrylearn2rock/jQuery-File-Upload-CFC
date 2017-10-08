@@ -1,19 +1,22 @@
 component {
-	if ( (server.coldfusion.productName eq 'ColdFusion'	&& ListFirst(server.coldfusion.productVersion) < 11 ) ||
-		 (server.coldfusion.productName eq 'Railo'		&& ListFirst(server.coldfusion.productVersion) < 10 ) ) {
-		include "_cf_header.cfm";
-		include "_arrayMap.cfm";
-	}
+  if ( 
+       (server.coldfusion.productName eq 'ColdFusion'  && ListFirst(server.coldfusion.productVersion) < 11 ) ||
+       (server.coldfusion.productName eq 'Lucee'  && ListFirst(server.coldfusion.productVersion) < 10 ) ||
+       (server.coldfusion.productName eq 'Railo'  && ListFirst(server.coldfusion.productVersion) < 10 ) 
+     ) {
+    include "_cf_header.cfm";
+    include "_arrayMap.cfm";
+  }
 
-	include "_fileUploadAll.cfm";			// CF10 bugfix
+  include "_fileUploadAll.cfm";      // CF10 bugfix
 
-	if (server.coldfusion.productName neq 'Railo' ) {
-		include "_empty.cfm";
-	}
-	include "_preg_replace_callback.cfm";
-	include "_getImageSize.cfm";
+  if (server.coldfusion.productName neq 'Railo' && server.coldfusion.productName neq 'Lucee' ) {
+    include "_empty.cfm";
+  }
+  include "_preg_replace_callback.cfm";
+  include "_getImageSize.cfm";
 
-	options = {};
+  options = {};
 
     error_messages = {
         1 = 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
@@ -79,7 +82,7 @@ component {
             'inline_file_types' = '\.(gif|jpe?g|png)',
             // Defines which files (based on their names) are accepted for upload:
             'accept_file_types' = '.+',
-            'max_file_size' = 20 * 1024 * 1024,	// 20mb
+            'max_file_size' = 20 * 1024 * 1024,  // 20mb
             'min_file_size' = 1,
             // The maximum number of files for the upload directory:
             'max_number_of_files' = "",
@@ -143,15 +146,15 @@ component {
             }
         };
         if (isDefined("arguments.options")) {
-        	structAppend(variables.options, options);
+          structAppend(variables.options, options);
         }
         if (isDefined("arguments.error_messages")) {
-        	structAppend(variables.error_messages, error_messages);
+          structAppend(variables.error_messages, error_messages);
         }
-		if (processRequest){
-			processRequest();
-		}
-		return this;
+    if (processRequest){
+      processRequest();
+    }
+    return this;
     }
 
     function processRequest() {
@@ -203,7 +206,7 @@ component {
             var version_path = '';
         } else {
             var version_dir = isDefined("variables.options.image_versions.#version#.upload_dir") ?
-            	options['image_versions'][version]['upload_dir'] : "";
+              options['image_versions'][version]['upload_dir'] : "";
             if (len(version_dir)) {
                 return version_dir & get_user_path() & file_name;
             }
@@ -232,7 +235,7 @@ component {
             var version_path = '';
         } else {
             var version_url = isDefined("options.image_versions.#version#.upload_url") ?
-            	options['image_versions'][version]['upload_url'] : "";
+              options['image_versions'][version]['upload_url'] : "";
             if (len(version_url)) {
                 return version_url & get_user_path() & urlEncodedFormat(file_name);
             }
@@ -297,18 +300,18 @@ component {
         return;
     }
 
-	private function get_file_objects(iterationMethod=get_file_object) {
-		var uploadDir = get_upload_path();
-		if (!directoryExists(uploadDir)) {
-			return [];
-		}
-		return arrayFilter(
-			arrayMap(directoryList(uploadDir, false, "name"), iterationMethod),
-			function(el) {
-				return !isNull(el);
-			}
-		);
-	}
+  private function get_file_objects(iterationMethod=get_file_object) {
+    var uploadDir = get_upload_path();
+    if (!directoryExists(uploadDir)) {
+      return [];
+    }
+    return arrayFilter(
+      arrayMap(directoryList(uploadDir, false, "name"), iterationMethod),
+      function(el) {
+        return !isNull(el);
+      }
+    );
+  }
 
     private function count_file_objects() {
         return arrayLen(get_file_objects('is_valid_file_object'));
@@ -365,10 +368,10 @@ component {
         var img_height = "";
 
         if ( (len(max_width) || len(max_height) || len(min_width) || len(min_height)) &&
-        		reFindNoCase(options['image_file_types'] ,file.name) ) {
-           	var size = get_image_size(uploaded_file);
-           	img_width = size[1];
-           	img_height = size[2];
+            reFindNoCase(options['image_file_types'] ,file.name) ) {
+             var size = get_image_size(uploaded_file);
+             img_width = size[1];
+             img_height = size[2];
         }
         if (!isNull(local.img_width) && !empty(local.img_width)) {
             if (len(max_width) && img_width > max_width) {
@@ -392,19 +395,19 @@ component {
     }
 
     private function upcount_name_callback(matches) {
-		var index = arrayIsDefined(matches, 2) ? val(matches[2]) + 1 : 1;
-		var ext = arrayIsDefined(matches, 3) ? matches[3] : '';
-		return ' (' & index & ')' & ext;
+    var index = arrayIsDefined(matches, 2) ? val(matches[2]) + 1 : 1;
+    var ext = arrayIsDefined(matches, 3) ? matches[3] : '';
+    return ' (' & index & ')' & ext;
     }
 
-	private function upcount_name(name) {
-		return preg_replace_callback(
-			'(?:(?: \(([\d]+)\))?(\.[^.]+))?$',
-			upcount_name_callback,
-			name,
-			1
-		);
-	}
+  private function upcount_name(name) {
+    return preg_replace_callback(
+      '(?:(?: \(([\d]+)\))?(\.[^.]+))?$',
+      upcount_name_callback,
+      name,
+      1
+    );
+  }
 
     private function get_unique_filename(file_path, name, size, type, error,
             index, content_range) {
@@ -509,119 +512,119 @@ component {
     }
 
 
-	private function cfimage_imageFlip(image, mode) {
-		switch(mode) {
-			case 1:
-				imageFlip(image, "horizontal");
-				return image;
-				break;
-			case 2:
-				imageFlip(image, "vertical");
-				return image;
-				break;
-			case 3:
-				imageFlip(image, "diagonal");
-				return image;
-				break;
-			default:
-				return image;
-		}
-	}
+  private function cfimage_imageFlip(image, mode) {
+    switch(mode) {
+      case 1:
+        imageFlip(image, "horizontal");
+        return image;
+        break;
+      case 2:
+        imageFlip(image, "vertical");
+        return image;
+        break;
+      case 3:
+        imageFlip(image, "diagonal");
+        return image;
+        break;
+      default:
+        return image;
+    }
+  }
 
-	private function cfimage_orient_image(file_path, src_img) {
+  private function cfimage_orient_image(file_path, src_img) {
         var image = imageRead(file_path);
-		var orientation = ImageGetEXIFTag(image, 'orientation');
+    var orientation = ImageGetEXIFTag(image, 'orientation');
 
-		if (!isNull(orientation) && findNoCase('rotate', orientation)) {
-			var rotateValue = reReplace(orientation,'[^0-9]','','all');
+    if (!isNull(orientation) && findNoCase('rotate', orientation)) {
+      var rotateValue = reReplace(orientation,'[^0-9]','','all');
 
-			// copy the image to remove the exif data
-			var theImage = imageCopy(theImage,0,0,theImage.width,theImage.height);
+      // copy the image to remove the exif data
+      var theImage = imageCopy(theImage,0,0,theImage.width,theImage.height);
 
-  			imageRotate(theImage,rotateValue);
-			imageWrite(theImage, filePath, 1, true);
-		}
-
-		cfimage_set_image_object(filePath, theImage);
-		return true;
+        imageRotate(theImage,rotateValue);
+      imageWrite(theImage, filePath, 1, true);
     }
 
-	private function cfimage_create_scaled_image(fileName, version, options) {
-		var paths = get_scaled_image_file_paths(fileName, version);
-		var file_path = paths[1];
-		var new_file_path = paths[2];
+    cfimage_set_image_object(filePath, theImage);
+    return true;
+    }
 
-		var type = listLast(fileName, '.');
+  private function cfimage_create_scaled_image(fileName, version, options) {
+    var paths = get_scaled_image_file_paths(fileName, version);
+    var file_path = paths[1];
+    var new_file_path = paths[2];
 
-		var src_img = cfimage_get_image_object(
-			file_path,
-			"",
-			structKeyExists(options,'no_cache') && !empty(options['no_cache'])
-		);
-		var image_oriented = false;
-		if (structKeyExists(options,'auto_oritent') && !empty(options['auto_oritent']) && cfimage_orientImage(
-			file_path,
-			src_img
-		)) {
-			image_oriented = true;
-			src_img = cfimage_getImageObject(
-				file_path,
-				""
-			);
-		}
-		var max_width = img_width = ImageGetWidth(src_img);
-		var new_height = img_height = ImageGetHeight(src_img);
-		if (structKeyExists(options,'max_width') && !empty(options['max_width'])) {
-			max_width = options['max_width'];
-		}
-		if (structKeyExists(options,'max_height') && !empty(options['max_height'])) {
-			max_height = options['max_height'];
-		}
-		var scale = min(
-			max_width / img_width,
-			new_height / img_height
-		);
-		if (scale >= 1) {
-			if (image_oriented) {
-				imageWrite(src_img, new_file_path);
-				return true;
-			}
-			if (file_path != new_file_path) {
-				filecopy(file_path, new_file_path);
-				return true;
-			}
-			return true;
-		}
-		var new_img = duplicate(src_img);
-		if (structKeyExists(options,'crop') && empty(options['crop'])) {
-			var new_width = img_width * scale;
-			var new_height = img_height * scale;
-			var dst_x = 0;
-			var dst_y = 0;
-			imageScaleToFit(new_img, new_width, new_height);
-		} else {
-			if ((img_width / img_height) >= (max_width / max_height)) {
-				new_width = img_width / (img_height / max_height);
-				new_height = max_height;
-			} else {
-				new_width = max_width;
-				new_height = img_height / (img_width / max_width);
-			}
-			var dst_x = 0 - (new_width - max_width) / 2;
-			var dst_y = 0 - (new_height - max_height) / 2;
-	        imageScaleToFit(new_img, new_width, new_height);
-		}
+    var type = listLast(fileName, '.');
+
+    var src_img = cfimage_get_image_object(
+      file_path,
+      "",
+      structKeyExists(options,'no_cache') && !empty(options['no_cache'])
+    );
+    var image_oriented = false;
+    if (structKeyExists(options,'auto_oritent') && !empty(options['auto_oritent']) && cfimage_orientImage(
+      file_path,
+      src_img
+    )) {
+      image_oriented = true;
+      src_img = cfimage_getImageObject(
+        file_path,
+        ""
+      );
+    }
+    var max_width = img_width = ImageGetWidth(src_img);
+    var new_height = img_height = ImageGetHeight(src_img);
+    if (structKeyExists(options,'max_width') && !empty(options['max_width'])) {
+      max_width = options['max_width'];
+    }
+    if (structKeyExists(options,'max_height') && !empty(options['max_height'])) {
+      max_height = options['max_height'];
+    }
+    var scale = min(
+      max_width / img_width,
+      new_height / img_height
+    );
+    if (scale >= 1) {
+      if (image_oriented) {
+        imageWrite(src_img, new_file_path);
+        return true;
+      }
+      if (file_path != new_file_path) {
+        filecopy(file_path, new_file_path);
+        return true;
+      }
+      return true;
+    }
+    var new_img = duplicate(src_img);
+    if (structKeyExists(options,'crop') && empty(options['crop'])) {
+      var new_width = img_width * scale;
+      var new_height = img_height * scale;
+      var dst_x = 0;
+      var dst_y = 0;
+      imageScaleToFit(new_img, new_width, new_height);
+    } else {
+      if ((img_width / img_height) >= (max_width / max_height)) {
+        new_width = img_width / (img_height / max_height);
+        new_height = max_height;
+      } else {
+        new_width = max_width;
+        new_height = img_height / (img_width / max_width);
+      }
+      var dst_x = 0 - (new_width - max_width) / 2;
+      var dst_y = 0 - (new_height - max_height) / 2;
+          imageScaleToFit(new_img, new_width, new_height);
+    }
 
         var success = true;
 
-		try {
-			imageWrite(new_img, new_file_path);
-		} catch (exception e) {
-			success = false;
-		}
-		cfimage_set_image_object(file_path, new_img);
-		return success;
-	}
+    try {
+      imageWrite(new_img, new_file_path);
+    } catch (exception e) {
+      success = false;
+    }
+    cfimage_set_image_object(file_path, new_img);
+    return success;
+  }
 
 
     private function imagemagick_create_scaled_image(file_name, version, options) {
@@ -695,7 +698,7 @@ component {
     }
 
     private function destroy_image_object(file_path) {
-		// TODO: do nothing?
+    // TODO: do nothing?
     }
 
 
@@ -716,7 +719,7 @@ component {
                     file.size = get_file_size(file_path, true);
                 }
             } else {
-            	arrayAppend(failed_versions, version ? version : 'original');
+              arrayAppend(failed_versions, version ? version : 'original');
             }
         });
         if (arrayLen(failed_versions)) {
@@ -774,7 +777,7 @@ component {
         return file;
     }
 
-	//if doesn't work, use cfcontent
+  //if doesn't work, use cfcontent
     private function readfile(file_path) {
         var file_size = get_file_size(file_path);
         var chunk_size = options['readfile_chunk_size'];
@@ -782,11 +785,11 @@ component {
             handle = fileOpen(file_path, 'readBinary');
             var response = getPageContext().getFusionContext().getResponse();
             while (!fileIsEOF(handle)) {
-				// replace the output stream contents with the binary
-				response.getOutputStream().writeThrough( fileRead(handle, chunk_size) );
+        // replace the output stream contents with the binary
+        response.getOutputStream().writeThrough( fileRead(handle, chunk_size) );
 
                 getPageContext().getOut().flush();
-				// leave immediately to ensure now whitespace is added
+        // leave immediately to ensure now whitespace is added
             }
             fileClose(handle);
             return file_size;
@@ -803,11 +806,11 @@ component {
         var value = trim(listRest(str, ':'));
 
         if (name == "location") {
-        	location(value);
+          location(value);
          } else {
-	        //cf_header(name=name, value=value);
-	        getpagecontext().getresponse().setHeader(name,value);
-	    }
+          //cf_header(name=name, value=value);
+          getpagecontext().getresponse().setHeader(name,value);
+      }
     }
 
     private function get_server_var(id) {
@@ -820,7 +823,7 @@ component {
             redirect = !isNull(URL.redirect) ?
                 URL['redirect'] : "";
             if (len(redirect)) {
-                header('Location: ' & sprintf(redirect, urlEncodedFormat(json)));	//TODO: replace sprintf
+                header('Location: ' & sprintf(redirect, urlEncodedFormat(json)));  //TODO: replace sprintf
                 return;
             }
             head();
@@ -853,7 +856,7 @@ component {
 
     private function get_file_names_params() {
         var params = !isNull(URL[options['param_name']]) ?
-        	URL[options['param_name']] : {};
+          URL[options['param_name']] : {};
         structEach(params, function(key, value) {
             params[key] = getFileFromPath(value);
         });
@@ -971,23 +974,23 @@ component {
 
         // Parse the Content-Range header, which has the following form:
         // Content-Range: bytes 0-524287/2000000
-       	var content_range = len(get_server_var('HTTP_CONTENT_RANGE')) ?
-       		reMatch('[0-9]+', get_server_var('HTTP_CONTENT_RANGE')) : "";
+         var content_range = len(get_server_var('HTTP_CONTENT_RANGE')) ?
+           reMatch('[0-9]+', get_server_var('HTTP_CONTENT_RANGE')) : "";
 
         var size = isArray(content_range) ? content_range[3] : "";
         var files = [];
 
         for (var index=1; index <= arrayLen(upload); index++) {
-        	var curUpload = upload[index];
+          var curUpload = upload[index];
             arrayAppend(files,
-            	handle_file_upload(
-            		curUpload.serverDirectory & '/' & curUpload.serverFile,
-            		curUpload.serverFile,
-            		len(size) ? size : curUpload.fileSize,
-            		curUpload.contentType & '/' & curUpload.contentSubType,
-            		"",
-            		index,
-            		content_range
+              handle_file_upload(
+                curUpload.serverDirectory & '/' & curUpload.serverFile,
+                curUpload.serverFile,
+                len(size) ? size : curUpload.fileSize,
+                curUpload.contentType & '/' & curUpload.contentSubType,
+                "",
+                index,
+                content_range
                 ));
         }
 
@@ -1007,7 +1010,7 @@ component {
             var file_path = get_upload_path(file_name);
             var success = fileExists(file_path) && file_name[1] != '.';
             if (success) {
-            	fileDelete(file_path);
+              fileDelete(file_path);
                 structEach(options['image_versions'], function(version, options) {
                     if (!empty(version)) {
                         var file = get_upload_path(file_name, version);
