@@ -246,16 +246,16 @@ component {
     }
 
     private function set_additional_file_properties(file) {
-        file.deleteUrl = options['script_url']
+        file['deleteUrl'] = options['script_url']
              & get_query_separator(options['script_url'])
              & get_singular_param_name()
              & '=' & urlEncodedFormat(file.name);
-        file.deleteType = options['delete_type'];
+        file['deleteType'] = options['delete_type'];
         if (file.deleteType != 'DELETE') {
-            file.deleteUrl &= '&_method=DELETE';
+            file['deleteUrl'] &= '&_method=DELETE';
         }
         if (options['access_control_allow_credentials']) {
-            file.deleteWithCredentials = true;
+            file['deleteWithCredentials'] = true;
         }
     }
 
@@ -279,11 +279,11 @@ component {
     private function get_file_object(file_name) {
         if (is_valid_file_object(file_name)) {
             var file = {};
-            file.name = file_name;
-            file.size = get_file_size(
+            file['name'] = file_name;
+            file['size'] = get_file_size(
                 get_upload_path(file_name)
             );
-            file.url = get_download_url(file.name);
+            file['url'] = get_download_url(file.name);
             structEach(options['image_versions'], function(version, options) {
                 if (!empty(version)) {
                     if (fileExists(get_upload_path(file_name, version))) {
@@ -324,7 +324,7 @@ component {
 
     private function validate(uploaded_file, file, error, index) {
         if (len(error)) {
-            file.error = get_error_message(error);
+            file['error'] = get_error_message(error);
             return false;
         }
         content_length = val(
@@ -332,7 +332,7 @@ component {
         );
 
         if (!reFindNoCase(options['accept_file_types'], file.name)) {
-            file.error = get_error_message('accept_file_types');
+            file['error'] = get_error_message('accept_file_types');
             return false;
         }
         if (len(uploaded_file) && fileExists(uploaded_file)) {
@@ -344,19 +344,19 @@ component {
                 file_size > options['max_file_size'] ||
                 file.size > options['max_file_size'])
             ) {
-            file.error = get_error_message('max_file_size');
+            file['error'] = get_error_message('max_file_size');
             return false;
         }
         if (options['min_file_size'] &&
             file_size < options['min_file_size']) {
-            file.error = get_error_message('min_file_size');
+            file['error'] = get_error_message('min_file_size');
             return false;
         }
         if (isNumeric(options['max_number_of_files']) &&
                 (count_file_objects() >= options['max_number_of_files']) &&
                 // Ignore additional chunks of existing files:
                 !fileExists(get_upload_path(file.name))) {
-            file.error = get_error_message('max_number_of_files');
+            file['error'] = get_error_message('max_number_of_files');
             return false;
         }
         max_width = isDefined('variables.options.max_width') ? options['max_width'] : "";
@@ -375,19 +375,19 @@ component {
         }
         if (!isNull(local.img_width) && !empty(local.img_width)) {
             if (len(max_width) && img_width > max_width) {
-                file.error = get_error_message('max_width');
+                file['error'] = get_error_message('max_width');
                 return false;
             }
             if (len(max_height) && img_height > max_height) {
-                file.error = get_error_message('max_height');
+                file['error'] = get_error_message('max_height');
                 return false;
             }
             if (len(min_width) && img_width < min_width) {
-                file.error = get_error_message('min_width');
+                file['error'] = get_error_message('min_width');
                 return false;
             }
             if (len(min_height) && img_height < min_height) {
-                file.error = get_error_message('min_height');
+                file['error'] = get_error_message('min_height');
                 return false;
             }
         }
@@ -716,14 +716,14 @@ component {
                         version
                     );
                 } else {
-                    file.size = get_file_size(file_path, true);
+                    file['size'] = get_file_size(file_path, true);
                 }
             } else {
               arrayAppend(failed_versions, version ? version : 'original');
             }
         });
         if (arrayLen(failed_versions)) {
-            file.error = get_error_message('image_resize')
+            file['error'] = get_error_message('image_resize')
                      & ' (' & arrayToList(failed_versions,', ') & ')';
         }
         // Free memory:
@@ -733,10 +733,10 @@ component {
     private function handle_file_upload(uploaded_file, name, size, type, error,
             index, content_range) {
         var file = {};
-        file.name = get_file_name(uploaded_file, name, size, type, error,
+        file['name'] = get_file_name(uploaded_file, name, size, type, error,
             index, content_range);
-        file.size = val(size);
-        file.type = type;
+        file['size'] = val(size);
+        file['type'] = type;
         if (validate(uploaded_file, file, error, index)) {
             handle_form_data(file, index);
             upload_dir = get_upload_path();
@@ -761,15 +761,15 @@ component {
             }
             var file_size = get_file_size(file_path, append_file);
             if (file_size == file.size) {
-                file.url = get_download_url(file.name);
+                file['url'] = get_download_url(file.name);
                 if (is_valid_image_file(file_path)) {
                     handle_image_file(file_path, file);
                 }
             } else {
-                file.size = file_size;
+                file['size'] = file_size;
                 if (isArray(content_range) && !arrayLen(content_range) && options['discard_aborted_uploads']) {
                     fileDelete(file_path);
-                    file.error = get_error_message('abort');
+                    file['error'] = get_error_message('abort');
                 }
             }
             set_additional_file_properties(file);
@@ -855,6 +855,9 @@ component {
     }
 
     private function get_file_names_params() {
+        if(!structKeyExists(URL,options['param_name'])){
+            return false;
+        }
         var params = !isNull(URL[options['param_name']]) ?
           URL[options['param_name']] : {};
         structEach(params, function(key, value) {
@@ -1008,7 +1011,7 @@ component {
         response = {};
         for(var file_name in file_names) {
             var file_path = get_upload_path(file_name);
-            var success = fileExists(file_path) && file_name[1] != '.';
+            var success = fileExists(file_path) && left(file_name,1) != '.';
             if (success) {
               fileDelete(file_path);
                 structEach(options['image_versions'], function(version, options) {
