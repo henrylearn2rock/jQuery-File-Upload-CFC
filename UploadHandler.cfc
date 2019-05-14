@@ -1,8 +1,8 @@
 component {
-  if ( 
+  if (
        (server.coldfusion.productName eq 'ColdFusion'  && ListFirst(server.coldfusion.productVersion) < 11 ) ||
        (server.coldfusion.productName eq 'Lucee'  && ListFirst(server.coldfusion.productVersion) < 10 ) ||
-       (server.coldfusion.productName eq 'Railo'  && ListFirst(server.coldfusion.productVersion) < 10 ) 
+       (server.coldfusion.productName eq 'Railo'  && ListFirst(server.coldfusion.productVersion) < 10 )
      ) {
     include "_cf_header.cfm";
     include "_arrayMap.cfm";
@@ -152,7 +152,7 @@ component {
           structAppend(variables.error_messages, error_messages);
         }
     if (processRequest){
-      processRequest();
+          this.processRequest();
     }
     return this;
     }
@@ -431,12 +431,13 @@ component {
         // Remove path information and dots around the filename, to prevent uploading
         // into different directories or replacing hidden system files.
         // Also remove control characters and spaces (\x00..\x20) around the filename:
-        name = rereplace(getFileFromPath(name), "[\x00-\x20]", '', 'all');
+        name = rereplace(getFileFromPath(name), "[\x00-\x1F]", '', 'all');
         // Use a timestamp for empty filenames:
         if (!len(name)) {
             name = getTickCount();
         }
 
+        extensions=[];
         switch(fileGetMimeType(file_path)){
             case "image/jpeg":
                 extensions = ['jpg', 'jpeg'];
@@ -484,7 +485,10 @@ component {
         if (!empty(version)) {
             version_dir = get_upload_path(version=version);
             if (!directoryExists(version_dir)) {
-                directoryCreate(version_dir);
+			    try {
+	                directoryCreate(version_dir);
+			    } catch (exception e) {
+			    }
             }
             new_file_path = version_dir & '/' & file_name;
         } else {
@@ -741,7 +745,11 @@ component {
             handle_form_data(file, index);
             upload_dir = get_upload_path();
             if (!directoryExists(upload_dir)) {
-                directoryCreate(upload_dir);
+			    try {
+			       directoryCreate(upload_dir);
+			    } catch (exception e) {
+			    }
+
             }
             file_path = get_upload_path(file.name);
             append_file = isArray(content_range) && arrayLen(content_range) && fileExists(file_path) &&
@@ -988,7 +996,7 @@ component {
             arrayAppend(files,
               handle_file_upload(
                 curUpload.serverDirectory & '/' & curUpload.serverFile,
-                curUpload.serverFile,
+                curUpload.attemptedserverFile,
                 len(size) ? size : curUpload.fileSize,
                 curUpload.contentType & '/' & curUpload.contentSubType,
                 "",
