@@ -543,13 +543,13 @@ component {
       var rotateValue = reReplace(orientation,'[^0-9]','','all');
 
       // copy the image to remove the exif data
-      var theImage = imageCopy(theImage,0,0,theImage.width,theImage.height);
+      var theImage = imageCopy(src_img,0,0,src_img.width,src_img.height);
 
         imageRotate(theImage,rotateValue);
-      imageWrite(theImage, filePath, 1, true);
+      imageWrite(theImage, file_path, 1, true);
+	    cfimage_set_image_object(file_path, theImage);
     }
 
-    cfimage_set_image_object(filePath, theImage);
     return true;
     }
 
@@ -566,12 +566,12 @@ component {
       structKeyExists(options,'no_cache') && !empty(options['no_cache'])
     );
     var image_oriented = false;
-    if (structKeyExists(options,'auto_oritent') && !empty(options['auto_oritent']) && cfimage_orientImage(
+    if (structKeyExists(options,'auto_orient') && !empty(options['auto_orient']) && cfimage_orient_Image(
       file_path,
       src_img
     )) {
       image_oriented = true;
-      src_img = cfimage_getImageObject(
+      src_img = cfimage_get_image_object(
         file_path,
         ""
       );
